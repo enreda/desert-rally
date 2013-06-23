@@ -1,0 +1,56 @@
+<languageVersion : 1.0;>
+
+kernel NewFilter
+<   namespace : "zaidabdulla";
+    vendor : "Zaid Abdulla";
+    version : 1;
+    description : "Calculates simple lighting based on a heightmap";
+>
+{
+    input image4 surface;
+    input image4 heightmap;
+    output pixel3 dst;
+
+    void
+    evaluatePixel()
+    {
+        float3 lightDir = normalize(float3(2, 2, -1));
+
+        // calculate ambient amount
+        float3 defaultNormal = float3(0, 0, -1);
+        float defaultLighting = dot(defaultNormal, lightDir);
+        if (defaultLighting < 0.0)
+            defaultLighting = 0.0;
+        float ambient = 1.0 - defaultLighting;
+        
+        float pixelWidth = pixelSize(heightmap).x;
+        float pixelHeight = pixelSize(heightmap).y;
+        
+        float2 coordLeft = outCoord() - float2(pixelWidth, 0);
+        float2 coordRight = outCoord() + float2(pixelWidth, 0);
+        float2 coordTop = outCoord() - float2(0, pixelHeight);
+        float2 coordBottom = outCoord() + float2(0, pixelHeight);
+        
+        float4 heightLeft = sample(heightmap, coordLeft);
+        float4 heightRight = sample(heightmap, coordRight);
+        float4 heightTop = sample(heightmap, coordTop);
+        float4 heightBottom = sample(heightmap, coordBottom);
+        
+        float3 pointLeft = float3(-pixelWidth, 0, heightLeft.x * 40.0);
+        float3 pointRight = float3(pixelWidth, 0, heightRight.x * 40.0);
+        float3 pointTop = float3(0, -pixelHeight, heightTop.x * 40.0);
+        float3 pointBottom = float3(0, pixelHeight, heightBottom.x * 40.0);
+        
+        float3 vec1 = pointRight - pointLeft;
+        float3 vec2 = pointBottom - pointTop;
+        
+        float3 crs = normalize(cross(vec2, vec1));
+        
+        float h = sample(heightmap, outCoord()).x;
+        
+        float d = dot(crs, lightDir);
+        if (d < 0.0)
+            d = 0.0;
+        dst = (sample(surface, outCoord()).xyz) * (ambient + d + (h * 0.1));
+    }
+}

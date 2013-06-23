@@ -1,0 +1,26 @@
+<languageVersion : 1.0;>
+
+kernel NewFilter
+<   namespace : "Your Namespace";
+    vendor : "Your Vendor";
+    version : 1;
+    description : "your description";
+>
+{
+    parameter float4 paint;
+    input image4 src;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        float4 clr = sample(src, outCoord());
+        
+        float m = max(max(clr.x, clr.y), clr.z);
+        float n = min(min(clr.x, clr.y), clr.z);
+        float diff = m - n;
+        diff = smoothStep(0.0, 0.15, diff);
+        
+        dst = clr * (paint * (1.0 - diff) + diff);
+    }
+}

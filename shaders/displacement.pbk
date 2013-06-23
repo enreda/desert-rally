@@ -1,0 +1,47 @@
+<languageVersion : 1.0;>
+
+kernel NewFilter
+<   namespace : "zaidabdulla";
+    vendor : "Zaid Abdulla";
+    version : 1;
+    description : "Calculates simple lighting based on a heightmap";
+>
+{
+    input image4 heightmap;
+    output pixel3 dst;
+
+    void
+    evaluatePixel()
+    {
+        float3 lightDir = normalize(float3(5, 5, -1));
+
+        // calculate ambient amount
+        float3 defaultNormal = float3(0, 0, -1);
+        float defaultLighting = dot(defaultNormal, lightDir);
+        if (defaultLighting < 0.0)
+            defaultLighting = 0.0;
+        float ambient = 1.0 - defaultLighting;
+        
+        float pixelWidth = pixelSize(heightmap).x;
+        float pixelHeight = pixelSize(heightmap).y;
+        
+        float2 coordLeft = outCoord() - float2(pixelWidth, 0);
+        float2 coordRight = outCoord() + float2(pixelWidth, 0);
+        float2 coordTop = outCoord() - float2(0, pixelHeight);
+        float2 coordBottom = outCoord() + float2(0, pixelHeight);
+        
+        float4 heightLeft = sample(heightmap, coordLeft);
+        float4 heightRight = sample(heightmap, coordRight);
+        float4 heightTop = sample(heightmap, coordTop);
+        float4 heightBottom = sample(heightmap, coordBottom);
+        
+        float x = heightRight.x - heightLeft.x;
+        float y = heightBottom.x - heightTop.x;
+        float h = sample(heightmap, outCoord()).x;
+        x *= h * 30.0;
+        y *= h * 30.0;
+        
+        dst = float3(0.5 + x, 0.5 + y, 0);
+        //dst = float3(1, 1, 0);
+    }
+}
